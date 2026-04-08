@@ -189,6 +189,10 @@
   .export-bar{display:flex;justify-content:flex-end;gap:10px;margin-bottom:16px;}
   .note-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;font-size:12px;color:var(--text-muted);margin-top:12px;line-height:1.7;}
   .tmpl-box{background:var(--info-light);border:1px solid #9ac8e8;border-radius:var(--radius);padding:12px 16px;font-size:12px;color:var(--info);margin-bottom:16px;line-height:1.8;}
+  .btn-export-sm{padding:4px 10px;border-radius:var(--radius);font-family:var(--sans);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;background:#fff;border:1px solid var(--border-strong);color:var(--text-muted);}
+  .btn-export-sm:hover{border-color:var(--accent);color:var(--accent-dark);}
+  .btn-export-sm.income-btn{border-color:#9FE1CB;color:var(--accent-dark);}
+  .btn-export-sm.expense-btn{border-color:#F5C4B3;color:var(--danger);}
 
   @media(max-width:768px){
     .summary-strip,.report-grid{grid-template-columns:1fr;}
@@ -281,7 +285,12 @@
       <div class="card">
         <div class="card-header">
           <span class="card-title">交易明細</span>
-          <span style="font-size:12px;color:var(--text-light);font-family:var(--mono)" id="tx-count">共 0 筆</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12px;color:var(--text-light);font-family:var(--mono)" id="tx-count">共 0 筆</span>
+            <button class="btn-export-sm" onclick="exportTxExcel('all')">⬇ 全部 Excel</button>
+            <button class="btn-export-sm income-btn" onclick="exportTxExcel('income')">⬇ 收入 Excel</button>
+            <button class="btn-export-sm expense-btn" onclick="exportTxExcel('expense')">⬇ 支出 Excel</button>
+          </div>
         </div>
         <div id="tx-body"><div class="empty-state"><div class="icon">📋</div><div>載入中…</div></div></div>
       </div>
@@ -289,7 +298,11 @@
 
     <!-- PAGE: P&L -->
     <div class="page" id="page-pl">
-      <div class="export-bar"><button class="btn-out" onclick="window.print()">🖨 列印報表</button></div>
+      <div class="export-bar">
+        <button class="btn-out" onclick="exportReportExcel('pl')">⬇ Excel</button>
+        <button class="btn-out" onclick="exportReportPDF('損益表')">⬇ PDF</button>
+        <button class="btn-out" onclick="window.print()">🖨 列印</button>
+      </div>
       <div class="summary-strip" style="margin-bottom:20px">
         <div class="summary-card"><div class="summary-label">毛利率</div><div class="summary-value" id="r-gross">—</div><div class="summary-sub">毛利 ÷ 營業收入</div></div>
         <div class="summary-card"><div class="summary-label">銷售成本率</div><div class="summary-value" id="r-cogs">—</div><div class="summary-sub">銷售成本 ÷ 營業收入</div></div>
@@ -310,7 +323,11 @@
 
     <!-- PAGE: BS -->
     <div class="page" id="page-bs">
-      <div class="export-bar"><button class="btn-out" onclick="window.print()">🖨 列印報表</button></div>
+      <div class="export-bar">
+        <button class="btn-out" onclick="exportReportExcel('bs')">⬇ Excel</button>
+        <button class="btn-out" onclick="exportReportPDF('資產負債表')">⬇ PDF</button>
+        <button class="btn-out" onclick="window.print()">🖨 列印</button>
+      </div>
       <div class="report-grid">
         <div class="card"><div class="card-header"><span class="card-title">資產（Assets）</span></div><div class="card-body" style="padding:0"><table class="report-table" id="bs-asset"></table></div></div>
         <div class="card"><div class="card-header"><span class="card-title">負債 & 股東權益</span></div><div class="card-body" style="padding:0"><table class="report-table" id="bs-liab"></table></div></div>
@@ -321,7 +338,11 @@
 
     <!-- PAGE: CF -->
     <div class="page" id="page-cf">
-      <div class="export-bar"><button class="btn-out" onclick="window.print()">🖨 列印報表</button></div>
+      <div class="export-bar">
+        <button class="btn-out" onclick="exportReportExcel('cf')">⬇ Excel</button>
+        <button class="btn-out" onclick="exportReportPDF('現金流量表')">⬇ PDF</button>
+        <button class="btn-out" onclick="window.print()">🖨 列印</button>
+      </div>
       <div class="card">
         <div class="card-header"><span class="card-title">現金流量表（Cash Flow Statement）</span></div>
         <div class="card-body" style="padding:0"><table class="report-table" id="cf-tbl"></table></div>
@@ -333,7 +354,7 @@
     <div class="page" id="page-import">
       <div class="tmpl-box">
         📋 <strong>Excel 匯入格式說明：</strong>欄位：<code>日期</code>（YYYY-MM-DD）｜<code>類型</code>（收入 或 支出）｜<code>科目</code>｜<code>摘要</code>｜<code>金額</code><br>
-        <strong>科目：</strong><span style="color:var(--accent-dark)">銷售收入、服務收入、利息收入、其他收入</span>　<span style="color:var(--danger)">銷售成本、薪資費用、租金費用、水電費用、行銷費用、辦公費用、稅金費用、宅配運費、其他費用</span>
+        <strong>科目：</strong><span style="color:var(--accent-dark)">銷售收入、服務收入、利息收入、其他收入</span>　<span style="color:var(--danger)">銷售成本、薪資費用、租金費用、水電費用、行銷費用、辦公費用、管理費用、稅金費用、宅配運費、其他費用</span>
       </div>
       <div class="card">
         <div class="card-header"><span class="card-title">上傳 Excel / CSV 檔案</span></div>
@@ -447,8 +468,8 @@ const CATS = {
     {id:'cogs',label:'銷售成本'},{id:'salary',label:'薪資費用'},
     {id:'rent',label:'租金費用'},{id:'util',label:'水電費用'},
     {id:'mkt',label:'行銷費用'},{id:'office',label:'辦公費用'},
-    {id:'tax',label:'稅金費用'},{id:'shipping',label:'宅配運費'},
-    {id:'other_e',label:'其他費用'},
+    {id:'mgmt',label:'管理費用'},{id:'tax',label:'稅金費用'},
+    {id:'shipping',label:'宅配運費'},{id:'other_e',label:'其他費用'},
   ]
 };
 const ALL_CAT_LABELS={};
@@ -839,7 +860,131 @@ function renderCF(){
   r+=`<tr class="total-row"><td>本期現金淨增（減）</td><td class="${cls(profit)}">${fmtS(profit)}</td></tr>`;
   document.getElementById('cf-tbl').innerHTML=`<thead><tr><th>項目</th><th style="text-align:right">金額（元）</th></tr></thead><tbody>${r}</tbody>`;
 }
-function renderChart(){
+// ════════════════════════════════════════
+// EXPORT FUNCTIONS
+// ════════════════════════════════════════
+
+// 收支明細匯出 Excel
+function exportTxExcel(filter){
+  const now=new Date();
+  const dateStr=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const filtered = filter==='all' ? entries
+    : entries.filter(e=>e.type===filter);
+  const label = filter==='income'?'收入':filter==='expense'?'支出':'全部收支';
+
+  const wb=XLSX.utils.book_new();
+  const header=['日期','類型','科目','摘要','金額（元）'];
+  const rows=filtered.map(e=>[
+    e.date,
+    e.type==='income'?'收入':'支出',
+    e.catLabel,
+    e.desc,
+    e.amount
+  ]);
+  const ws=XLSX.utils.aoa_to_sheet([header,...rows]);
+  ws['!cols']=[{wch:14},{wch:6},{wch:14},{wch:24},{wch:14}];
+  // Style header row
+  const range=XLSX.utils.decode_range(ws['!ref']);
+  for(let c=range.s.c;c<=range.e.c;c++){
+    const cell=ws[XLSX.utils.encode_cell({r:0,c})];
+    if(cell) cell.s={font:{bold:true},fill:{fgColor:{rgb:'1B4332'}},font:{color:{rgb:'FFFFFF'},bold:true}};
+  }
+  // Add total row
+  if(rows.length>0){
+    const total=filtered.reduce((s,e)=>s+e.amount,0);
+    ws[XLSX.utils.encode_cell({r:rows.length+1,c:3})]={v:'合計',t:'s'};
+    ws[XLSX.utils.encode_cell({r:rows.length+1,c:4})]={v:total,t:'n',z:'#,##0'};
+  }
+  XLSX.utils.book_append_sheet(wb,ws,label);
+  XLSX.writeFile(wb,`${label}_${dateStr}.xlsx`);
+}
+
+// 報表匯出 Excel
+function exportReportExcel(type){
+  const now=new Date();
+  const dateStr=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const wb=XLSX.utils.book_new();
+
+  if(type==='pl'){
+    const im=group('income'),em=group('expense');
+    const{inc,exp,profit}=totals();
+    const cogs=em['cogs']?.total||0,gross=inc-cogs,opex=exp-cogs;
+    const rows=[
+      ['損益表（Income Statement）',''],
+      ['',''],
+      ['一、營業收入',''],
+      ...CATS.income.filter(c=>im[c.id]).map(c=>[`　${c.label}`,im[c.id].total]),
+      ['　（無記錄）',''].filter(()=>!Object.keys(im).length),
+      ['營業收入合計',inc],
+      ['',''],
+      ['二、銷售成本',''],
+      em['cogs']?['　銷售成本',cogs]:['　（無記錄）',''],
+      ['毛利（Gross Profit）',gross],
+      ['',''],
+      ['三、營業費用',''],
+      ...CATS.expense.filter(c=>c.id!=='cogs'&&em[c.id]).map(c=>[`　${c.label}`,em[c.id].total]),
+      ['營業費用合計',opex],
+      ['',''],
+      ['本期淨利（損）',profit],
+    ].filter(r=>Array.isArray(r)&&r.length===2);
+    const ws=XLSX.utils.aoa_to_sheet([['項目','金額（元）'],...rows]);
+    ws['!cols']=[{wch:28},{wch:16}];
+    XLSX.utils.book_append_sheet(wb,ws,'損益表');
+    XLSX.writeFile(wb,`損益表_${dateStr}.xlsx`);
+
+  }else if(type==='bs'){
+    const{inc,exp,profit}=totals();
+    const cash=Math.max(0,CAPITAL+profit),ar=(group('income')['sales']?.total||0)*0.3,totA=cash+ar;
+    const ap=exp*0.2,eq=CAPITAL+profit,totLE=ap+eq;
+    const assetRows=[['資產負債表 — 資產',''],['項目','金額（元）'],
+      ['【流動資產】',''],['　現金及約當現金',cash],['　應收帳款（估）',ar],
+      ['流動資產合計',totA],['非流動資產',''],['　（無）',''],['資產總計',totA]];
+    const liabRows=[['資產負債表 — 負債及權益',''],['項目','金額（元）'],
+      ['【流動負債】',''],['　應付帳款（估）',ap],['負債合計',ap],
+      ['【股東權益】',''],['　資本額',CAPITAL],['　本期損益',profit],
+      ['權益合計',eq],['負債及權益總計',totLE]];
+    const ws1=XLSX.utils.aoa_to_sheet(assetRows);
+    const ws2=XLSX.utils.aoa_to_sheet(liabRows);
+    ws1['!cols']=ws2['!cols']=[{wch:28},{wch:16}];
+    XLSX.utils.book_append_sheet(wb,ws1,'資產');
+    XLSX.utils.book_append_sheet(wb,ws2,'負債及權益');
+    XLSX.writeFile(wb,`資產負債表_${dateStr}.xlsx`);
+
+  }else if(type==='cf'){
+    const{profit}=totals();
+    const rows=[['現金流量表（Cash Flow Statement）',''],['項目','金額（元）'],
+      ['一、營業活動現金流量',''],['　本期淨利（損）',profit],
+      ['營業活動現金流量小計',profit],
+      ['二、投資活動現金流量',''],['　（本期無）',''],['投資活動現金流量小計',0],
+      ['三、融資活動現金流量',''],['　（本期無）',''],['融資活動現金流量小計',0],
+      ['本期現金淨增（減）',profit]];
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:32},{wch:16}];
+    XLSX.utils.book_append_sheet(wb,ws,'現金流量表');
+    XLSX.writeFile(wb,`現金流量表_${dateStr}.xlsx`);
+  }
+}
+
+// 報表匯出 PDF（使用瀏覽器列印對話框）
+function exportReportPDF(name){
+  // 暫時隱藏不需要的元素，只顯示當前報表，觸發列印
+  const style=document.createElement('style');
+  style.id='pdf-print-style';
+  style.textContent=`
+    @media print {
+      .export-bar,.summary-strip,.chart-section,.card:has(.chart-bars){ display:none!important; }
+    }
+  `;
+  document.head.appendChild(style);
+  document.title=`${name}_${new Date().toLocaleDateString('zh-TW')}`;
+  window.print();
+  setTimeout(()=>{
+    document.head.removeChild(style);
+    document.title='企業記帳系統';
+  },1000);
+}
+
+
   const im=group('income'),em=group('expense');
   const allVals=[...Object.values(im),...Object.values(em)].map(g=>g.total);
   if(!allVals.length){document.getElementById('chart-bars').innerHTML='<div style="width:100%;text-align:center;color:var(--text-light);font-size:12px;line-height:4">新增記錄後顯示圖表</div>';return;}
