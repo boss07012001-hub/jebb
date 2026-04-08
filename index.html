@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -6,7 +7,7 @@
 <title>企業記帳系統</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
 <style>
   :root {
     --bg:#f4f2ee;--surface:#faf9f7;--card:#fff;--border:#e2ddd6;--border-strong:#c8c2b8;
@@ -410,11 +411,17 @@
 
 <script>
 // ════════════════════════════════════════
-// SUPABASE INIT (with Auth SDK)
+// SUPABASE INIT
 // ════════════════════════════════════════
 const SUPABASE_URL = 'https://eadmpkntatenqxblewhm.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_w_Gp8ymbAUZNRT2EPY6tIg_13YwTxTW';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false
+  }
+});
 
 // ════════════════════════════════════════
 // AUTH
@@ -427,32 +434,46 @@ async function doLogin(){
   if(!email||!password){ showErr('請填寫 Email 和密碼'); return; }
   btn.disabled=true; btn.textContent='登入中…';
   err.classList.remove('show');
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if(error){
-    showErr(error.message==='Invalid login credentials' ? 'Email 或密碼錯誤，請重新輸入' : error.message);
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if(error) throw error;
+    // manually trigger if onAuthStateChange doesn't fire
+    if(data?.session){
+      document.getElementById('login-page').style.display='none';
+      document.getElementById('app-wrap').classList.add('visible');
+      document.getElementById('user-email').textContent = data.session.user.email;
+      initApp();
+    }
+  } catch(e) {
+    const msg = e.message?.includes('Invalid login credentials') ? 'Email 或密碼錯誤，請重新輸入'
+      : e.message?.includes('Failed to fetch') ? '網路連線失敗，請確認網路後重試'
+      : (e.message || '登入失敗，請稍後再試');
+    showErr(msg);
     btn.disabled=false; btn.textContent='登入';
   }
-  // If success, onAuthStateChange handles the rest
 }
 function showErr(msg){ const e=document.getElementById('login-err'); e.textContent=msg; e.classList.add('show'); }
 
 async function doLogout(){
   await sb.auth.signOut();
+  entries=[];
+  appInited=false;
+  document.getElementById('login-page').style.display='flex';
+  document.getElementById('app-wrap').classList.remove('visible');
 }
 
 // Listen to auth state changes
 sb.auth.onAuthStateChange((event, session) => {
-  if(session){
-    // Logged in
+  if(session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')){
     document.getElementById('login-page').style.display='none';
     document.getElementById('app-wrap').classList.add('visible');
     document.getElementById('user-email').textContent = session.user.email;
     initApp();
-  } else {
-    // Logged out
+  } else if(event === 'SIGNED_OUT'){
     document.getElementById('login-page').style.display='flex';
     document.getElementById('app-wrap').classList.remove('visible');
     entries=[];
+    appInited=false;
   }
 });
 
