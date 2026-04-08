@@ -307,6 +307,7 @@ async function sbDelete(table, id){
     <div class="header-logo">📒 企業記帳系統</div>
     <div class="header-right">
       <span class="cloud-badge loading" id="cloud-status">⟳ 連線中…</span>
+      <span class="header-period" id="current-period"></span>
       <span class="user-info" id="user-email"></span>
       <button class="btn-logout" onclick="doLogout()">登出</button>
     </div>
@@ -552,9 +553,12 @@ function setCloudStatus(state,msg){
 async function initApp(){
   if(appInited) return;
   appInited=true;
-  document.getElementById('inp-date').value=new Date().toISOString().slice(0,10);
+  await new Promise(r=>setTimeout(r,150));
+  const dateEl=document.getElementById('inp-date');
+  if(dateEl) dateEl.value=new Date().toISOString().slice(0,10);
   const d=new Date();
-  document.getElementById('current-period').textContent=`${d.getFullYear()} 年 ${d.getMonth()+1} 月`;
+  const periodEl=document.getElementById('current-period');
+  if(periodEl) periodEl.textContent=`${d.getFullYear()} 年 ${d.getMonth()+1} 月`;
   refreshCats();
   await loadEntries();
 }
