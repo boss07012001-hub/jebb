@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>我的影片珍藏</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a23;
+    --surface2: #23232f;
+    --border: #2e2e3e;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --text: #eeeef5;
+    --muted: #888899;
+    --tag-bg: #2a2a3a;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; min-height: 100vh; }
+
+  /* LOGIN */
+  .login-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 24px;
+    width: 100%;
+    max-width: 340px;
+  }
+  .login-title {
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff 40%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .login-sub { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 24px; }
+  .login-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+  .login-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color .2s;
+  }
+  .login-input:focus { border-color: var(--accent); }
+  .login-btn {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 4px;
+  }
+  .login-err { color: #ff6584; font-size: 12px; text-align: center; margin-top: 10px; display: none; }
+
+  /* HEADER */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,15,19,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px 10px;
+    display: none;
+  }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .header h1 {
+    font-size: 17px; font-weight: 700;
+    background: linear-gradient(135deg, #fff 40%, var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .user-badge {
+    font-size: 12px; color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px;
+  }
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; transition: all .2s;
+  }
+  .icon-btn:hover { background: var(--accent); border-color: var(--accent); }
+  .search-bar {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 12px;
+  }
+  .search-bar input {
+    flex: 1; background: none; border: none; outline: none;
+    color: var(--text); font-size: 14px; font-family: inherit;
+  }
+  .search-bar input::placeholder { color: var(--muted); }
+
+  /* TABS */
+  .tabs-wrap {
+    padding: 0 16px; margin-top: 12px;
+    display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+  }
+  .tabs-wrap::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 6px 14px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); font-size: 13px; cursor: pointer;
+    white-space: nowrap; transition: all .2s; font-family: inherit;
+  }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+
+  /* SECTION */
+  .section { padding: 16px 16px 0; display: none; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .section-title { font-size: 15px; font-weight: 700; }
+  .add-cat-btn { font-size: 12px; color: var(--accent); background: none; border: none; cursor: pointer; font-family: inherit; }
+
+  .categories-scroll { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+  .categories-scroll::-webkit-scrollbar { display: none; }
+  .cat-card {
+    flex-shrink: 0; width: 110px; border-radius: 12px;
+    overflow: hidden; cursor: pointer; border: 2px solid transparent;
+    transition: all .2s; background: var(--surface);
+  }
+  .cat-card:hover, .cat-card.active { border-color: var(--accent); }
+  .cat-thumb { width: 100%; height: 70px; object-fit: cover; display: block; background: var(--surface2); }
+  .cat-thumb-placeholder { width: 100%; height: 70px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .cat-name { padding: 6px 8px; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cat-count { font-size: 10px; color: var(--muted); padding: 0 8px 6px; }
+
+  /* GRID */
+  .grid-section { padding: 16px; display: none; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .video-card {
+    background: var(--surface); border-radius: var(--radius);
+    overflow: hidden; cursor: pointer; border: 1px solid var(--border);
+    transition: transform .2s, border-color .2s;
+  }
+  .video-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .thumb-wrap { position: relative; width: 100%; padding-top: 56.25%; background: var(--surface2); }
+  .thumb-wrap img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .thumb-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 32px; background: linear-gradient(135deg, #1e1e2e, #2e2e4e); }
+  .play-badge { position: absolute; bottom: 6px; left: 6px; background: rgba(0,0,0,0.7); border-radius: 6px; padding: 3px 6px; font-size: 10px; }
+  .adder-badge { position: absolute; top: 6px; right: 6px; background: rgba(108,99,255,0.8); border-radius: 6px; padding: 2px 6px; font-size: 10px; color: #fff; }
+  .card-body { padding: 10px; }
+  .card-title { font-size: 12px; font-weight: 500; line-height: 1.5; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+  .tag { background: var(--tag-bg); color: var(--accent); font-size: 10px; padding: 2px 7px; border-radius: 20px; cursor: pointer; }
+  .tag:hover { background: var(--accent); color: #fff; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; }
+  .card-meta { font-size: 10px; color: var(--muted); }
+  .card-actions { display: flex; gap: 6px; }
+  .card-action-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 2px; transition: color .2s; }
+  .card-action-btn:hover { color: var(--accent); }
+
+  /* FAB */
+  .fab {
+    position: fixed; bottom: 24px; right: 20px;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none; color: #fff; font-size: 22px; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(108,99,255,0.5);
+    display: none; align-items: center; justify-content: center;
+    transition: transform .2s; z-index: 200;
+  }
+  .fab:hover { transform: scale(1.1); }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300; align-items: flex-end; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--surface); border-radius: 20px 20px 0 0; padding: 20px 20px 40px; width: 100%; max-height: 90vh; overflow-y: auto; animation: slideUp .3s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+  .modal h2 { font-size: 16px; margin-bottom: 16px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px; color: var(--text);
+    font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 60px; }
+  .form-select option { background: var(--surface2); }
+  .tag-input-row { display: flex; gap: 8px; }
+  .tag-input-row input { flex: 1; }
+  .tag-input-row button { background: var(--accent); border: none; border-radius: 10px; color: #fff; padding: 0 14px; cursor: pointer; font-family: inherit; font-size: 14px; }
+  .tags-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag-preview { background: var(--tag-bg); color: var(--accent); font-size: 12px; padding: 4px 10px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
+  .tag-preview .remove { cursor: pointer; color: var(--muted); }
+  .thumb-preview { width: 100%; height: 120px; border-radius: 10px; object-fit: cover; display: none; margin-top: 8px; border: 1px solid var(--border); }
+  .btn-primary { width: 100%; padding: 13px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 6px; }
+  .btn-secondary { flex: 1; padding: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 14px; cursor: pointer; font-family: inherit; }
+  .btn-danger { flex: 1; padding: 11px; background: #3a1a1a; border: 1px solid #5a2a2a; border-radius: 12px; color: #ff6584; font-size: 14px; cursor: pointer; font-family: inherit; }
+
+  /* DETAIL */
+  .detail-thumb { width: 100%; border-radius: 12px; margin-bottom: 14px; display: block; }
+  .detail-thumb-placeholder { width: 100%; height: 180px; background: var(--surface2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 48px; margin-bottom: 14px; }
+  .detail-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+  .detail-note { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.6; }
+  .detail-link { display: flex; align-items: center; gap: 8px; background: var(--surface2); border-radius: 10px; padding: 10px; text-decoration: none; color: var(--accent); font-size: 13px; margin-bottom: 12px; }
+  .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .detail-actions { display: flex; gap: 10px; }
+
+  /* LOADING / EMPTY */
+  .loading { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .empty-state .emoji { font-size: 40px; margin-bottom: 10px; }
+  .empty-state p { font-size: 14px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 10px 20px; border-radius: 20px;
+    font-size: 13px; z-index: 999; opacity: 0; transition: opacity .3s;
+    pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-title">📌 影片珍藏</div>
+    <div class="login-sub">輸入你的暱稱與密碼進入</div>
+    <label class="login-label">暱稱（你的名字）</label>
+    <input class="login-input" id="loginName" placeholder="例：小明、阿華..." maxlength="20">
+    <label class="login-label">密碼</label>
+    <input class="login-input" type="password" id="loginPass" placeholder="共用密碼" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">進入 →</button>
+    <div class="login-err" id="loginErr">密碼錯誤，請再試一次</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="header" id="mainHeader">
+  <div class="header-top">
+    <h1>📌 影片珍藏</h1>
+    <div class="header-right">
+      <span class="user-badge" id="userBadge"></span>
+      <button class="icon-btn" onclick="doLogout()" title="登出">⇦</button>
+    </div>
+  </div>
+  <div class="search-bar">
+    <span>🔍</span>
+    <input type="text" id="searchInput" placeholder="搜尋標題、標籤..." oninput="renderGrid()">
+  </div>
+</div>
+
+<div class="tabs-wrap" id="tabsWrap"></div>
+
+<div class="section" id="catSection">
+  <div class="section-header">
+    <span class="section-title">珍藏分類</span>
+    <button class="add-cat-btn" onclick="showAddCategory()">＋ 新增分類</button>
+  </div>
+  <div class="categories-scroll" id="categoriesScroll"></div>
+</div>
+
+<div class="grid-section" id="gridSection">
+  <div class="section-header">
+    <span class="section-title" id="gridTitle">近期儲存</span>
+    <span id="gridCount" style="font-size:12px;color:var(--muted)"></span>
+  </div>
+  <div id="loadingState" class="loading">載入中...</div>
+  <div class="grid" id="videoGrid"></div>
+  <div id="emptyState" class="empty-state" style="display:none">
+    <div class="emoji">🎬</div>
+    <p>還沒有儲存影片<br>點右下角 ＋ 開始新增</p>
+  </div>
+</div>
+
+<button class="fab" id="fab" onclick="showAddVideo()">＋</button>
+
+<!-- ADD VIDEO MODAL -->
+<div class="modal-overlay" id="addModal" onclick="closeModalOnBg(event,'addModal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📥 儲存新影片</h2>
+    <div class="form-group">
+      <label class="form-label">影片連結（FB / IG / YouTube）</label>
+      <input class="form-input" id="newUrl" placeholder="貼上影片網址" oninput="autoFetchThumb()">
+      <img class="thumb-preview" id="thumbPreview">
+    </div>
+    <div class="form-group">
+      <label class="form-label">縮圖網址（選填）</label>
+      <input class="form-input" id="newThumb" placeholder="https://..." oninput="updateThumbPreview()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">標題 *</label>
+      <input class="form-input" id="newTitle" placeholder="影片標題">
+    </div>
+    <div class="form-group">
+      <label class="form-label">分類</label>
+      <select class="form-select" id="newCategory">
+        <option value="">不分類</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">備註</label>
+      <textarea class="form-textarea" id="newNote" placeholder="記下重點或心得..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">標籤（按 Enter 新增）</label>
+      <div class="tag-input-row">
+        <input class="form-input" id="tagInput" placeholder="例：美食、旅遊、AI" onkeydown="tagKeydown(event)">
+        <button onclick="addTag()">新增</button>
+      </div>
+      <div class="tags-preview" id="tagsPreview"></div>
+    </div>
+    <button class="btn-primary" id="saveBtn" onclick="saveVideo()">💾 儲存</button>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal" onclick="closeModalOnBg(event,'detailModal')">
+  <div class="modal" id="detailContent"></div>
+</div>
+
+<!-- ADD CATEGORY MODAL -->
+<div class="modal-overlay" id="catModal" onclick="closeModalOnBg(event,'catModal')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📁 新增分類</h2>
+    <div class="form-group">
+      <label class="form-label">分類名稱</label>
+      <input class="form-input" id="newCatName" placeholder="例：台灣美食、AI資訊">
+    </div>
+    <div class="form-group">
+      <label class="form-label">圖示 Emoji</label>
+      <input class="form-input" id="newCatEmoji" placeholder="例：🍜" maxlength="2">
+    </div>
+    <button class="btn-primary" id="saveCatBtn" onclick="saveCategory()">新增分類</button>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://eadmpkntatenqxblewhm.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_w_Gp8ymbAUZNRT2EPY6tIg_13YwTxTW';
+const APP_PASSWORD = 'video2025'; // ← 共用密碼，可自行修改
+
+// ── STATE ──────────────────────────────────────────────────────────────
+let currentUser = localStorage.getItem('vb_user') || null;
+let categories = [];
+let videos = [];
+let pendingTags = [];
+let activeCategory = 'all';
+let activeTag = null;
+
+// ── API ────────────────────────────────────────────────────────────────
+async function api(method, table, body = null, filter = '') {
+  const url = `${SUPABASE_URL}/rest/v1/${table}${filter}`;
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': method === 'POST' ? 'return=representation' : 'return=representation'
+  };
+  const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : null });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+async function loadAll() {
+  try {
+    const [cats, vids] = await Promise.all([
+      api('GET', 'vb_categories', null, '?order=created_at.asc'),
+      api('GET', 'vb_videos', null, '?order=created_at.desc')
+    ]);
+    categories = cats;
+    videos = vids;
+    renderAll();
+  } catch (e) {
+    document.getElementById('loadingState').textContent = '載入失敗，請重新整理頁面';
+    console.error(e);
+  }
+}
+
+// ── AUTH ───────────────────────────────────────────────────────────────
+function doLogin() {
+  const name = document.getElementById('loginName').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  if (!name) { showLoginErr('請輸入暱稱'); return; }
+  if (pass !== APP_PASSWORD) { showLoginErr('密碼錯誤，請再試一次'); return; }
+  currentUser = name;
+  localStorage.setItem('vb_user', name);
+  enterApp();
+}
+function showLoginErr(msg) {
+  const el = document.getElementById('loginErr');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function doLogout() {
+  localStorage.removeItem('vb_user');
+  currentUser = null;
+  location.reload();
+}
+function enterApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainHeader').style.display = 'block';
+  document.getElementById('catSection').style.display = 'block';
+  document.getElementById('gridSection').style.display = 'block';
+  document.getElementById('fab').style.display = 'flex';
+  document.getElementById('userBadge').textContent = '👤 ' + currentUser;
+  loadAll();
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+if (currentUser) {
+  enterApp();
+}
+
+// ── THUMB ──────────────────────────────────────────────────────────────
+function getYTId(url) {
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/))([^&\n?#]+)/);
+  return m ? m[1] : null;
+}
+function autoFetchThumb() {
+  const url = document.getElementById('newUrl').value.trim();
+  const ytId = getYTId(url);
+  if (ytId) {
+    const t = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+    document.getElementById('newThumb').value = t;
+    updateThumbPreview();
+  }
+}
+function updateThumbPreview() {
+  const t = document.getElementById('newThumb').value.trim();
+  const img = document.getElementById('thumbPreview');
+  if (t) { img.src = t; img.style.display = 'block'; }
+  else { img.style.display = 'none'; }
+}
+
+// ── TAGS ───────────────────────────────────────────────────────────────
+function tagKeydown(e) { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }
+function addTag() {
+  const v = document.getElementById('tagInput').value.trim();
+  if (v && !pendingTags.includes(v)) { pendingTags.push(v); renderPendingTags(); }
+  document.getElementById('tagInput').value = '';
+}
+function removeTag(t) { pendingTags = pendingTags.filter(x => x !== t); renderPendingTags(); }
+function renderPendingTags() {
+  document.getElementById('tagsPreview').innerHTML = pendingTags.map(t =>
+    `<span class="tag-preview">#${t} <span class="remove" onclick="removeTag('${t}')">✕</span></span>`
+  ).join('');
+}
+
+// ── MODALS ─────────────────────────────────────────────────────────────
+function showAddVideo() {
+  ['newUrl','newThumb','newTitle','newNote'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('thumbPreview').style.display = 'none';
+  pendingTags = [];
+  renderPendingTags();
+  const sel = document.getElementById('newCategory');
+  sel.innerHTML = '<option value="">不分類</option>' +
+    categories.map(c => `<option value="${c.id}">${c.emoji} ${c.name}</option>`).join('');
+  if (activeCategory !== 'all') sel.value = activeCategory;
+  document.getElementById('addModal').classList.add('show');
+}
+function showAddCategory() {
+  document.getElementById('newCatName').value = '';
+  document.getElementById('newCatEmoji').value = '';
+  document.getElementById('catModal').classList.add('show');
+}
+function closeModalOnBg(e, id) { if (e.target.classList.contains('modal-overlay')) closeModal(id); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// ── SAVE ───────────────────────────────────────────────────────────────
+async function saveVideo() {
+  const title = document.getElementById('newTitle').value.trim();
+  if (!title) { showToast('請輸入標題'); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = '儲存中...';
+  try {
+    const body = {
+      title,
+      url: document.getElementById('newUrl').value.trim(),
+      thumb: document.getElementById('newThumb').value.trim(),
+      category_id: document.getElementById('newCategory').value || null,
+      note: document.getElementById('newNote').value.trim(),
+      tags: pendingTags,
+      added_by: currentUser
+    };
+    const result = await api('POST', 'vb_videos', body);
+    videos.unshift(result[0]);
+    closeModal('addModal');
+    renderAll();
+    showToast('✅ 已儲存！');
+  } catch (e) {
+    showToast('❌ 儲存失敗：' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 儲存';
+  }
+}
+
+async function saveCategory() {
+  const name = document.getElementById('newCatName').value.trim();
+  if (!name) { showToast('請輸入分類名稱'); return; }
+  const btn = document.getElementById('saveCatBtn');
+  btn.disabled = true; btn.textContent = '新增中...';
+  try {
+    const body = { name, emoji: document.getElementById('newCatEmoji').value.trim() || '📁', created_by: currentUser };
+    const result = await api('POST', 'vb_categories', body);
+    categories.push(result[0]);
+    closeModal('catModal');
+    renderAll();
+    showToast('✅ 分類已新增！');
+  } catch (e) {
+    showToast('❌ 新增失敗：' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '新增分類';
+  }
+}
+
+async function deleteVideo(id) {
+  if (!confirm('確定要刪除這則珍藏？')) return;
+  try {
+    await api('DELETE', 'vb_videos', null, `?id=eq.${id}`);
+    videos = videos.filter(v => v.id !== id);
+    closeModal('detailModal');
+    renderAll();
+    showToast('🗑 已刪除');
+  } catch (e) {
+    showToast('❌ 刪除失敗');
+  }
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────
+function renderAll() {
+  renderTabs();
+  renderCategories();
+  renderGrid();
+}
+
+function renderTabs() {
+  const allTags = [...new Set(videos.flatMap(v => v.tags || []))];
+  document.getElementById('tabsWrap').innerHTML =
+    `<button class="tab ${!activeTag?'active':''}" onclick="filterTag(null,this)">全部</button>` +
+    allTags.map(t => `<button class="tab ${activeTag===t?'active':''}" onclick="filterTag('${t}',this)">#${t}</button>`).join('');
+}
+
+function filterTag(t, btn) {
+  activeTag = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+function renderCategories() {
+  document.getElementById('categoriesScroll').innerHTML = categories.map(c => {
+    const vids = videos.filter(v => v.category_id === c.id);
+    const first = vids.find(v => v.thumb);
+    const thumb = first
+      ? `<img class="cat-thumb" src="${first.thumb}" onerror="this.style.display='none'">`
+      : `<div class="cat-thumb-placeholder">${c.emoji}</div>`;
+    return `<div class="cat-card ${activeCategory===c.id?'active':''}" onclick="setCategory('${c.id}')">
+      ${thumb}
+      <div class="cat-name">${c.emoji} ${c.name}</div>
+      <div class="cat-count">${vids.length} 則影片</div>
+    </div>`;
+  }).join('');
+}
+
+function setCategory(id) {
+  activeCategory = activeCategory === id ? 'all' : id;
+  const cat = categories.find(c => c.id === activeCategory);
+  document.getElementById('gridTitle').textContent = cat ? cat.name : '近期儲存';
+  renderAll();
+}
+
+function renderGrid() {
+  const q = (document.getElementById('searchInput').value || '').toLowerCase();
+  let vids = [...videos];
+  if (activeCategory !== 'all') vids = vids.filter(v => v.category_id === activeCategory);
+  if (activeTag) vids = vids.filter(v => (v.tags||[]).includes(activeTag));
+  if (q) vids = vids.filter(v => v.title.toLowerCase().includes(q) || (v.tags||[]).join(' ').toLowerCase().includes(q));
+
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('gridCount').textContent = vids.length + ' 則';
+  const grid = document.getElementById('videoGrid');
+  const empty = document.getElementById('emptyState');
+  if (!vids.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  grid.innerHTML = vids.map(v => {
+    const cat = categories.find(c => c.id === v.category_id);
+    const thumbHtml = v.thumb
+      ? `<img src="${v.thumb}" onerror="this.parentElement.innerHTML='<div class=thumb-placeholder>🎬</div>'">`
+      : `<div class="thumb-placeholder">🎬</div>`;
+    const date = v.created_at ? v.created_at.slice(0,10) : '';
+    return `<div class="video-card" onclick="showDetail('${v.id}')">
+      <div class="thumb-wrap">
+        ${thumbHtml}
+        <div class="play-badge">▶ 影片</div>
+        ${v.added_by ? `<div class="adder-badge">${v.added_by}</div>` : ''}
+      </div>
+      <div class="card-body">
+        <div class="card-title">${v.title}</div>
+        <div class="card-tags">${(v.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('')}</div>
+        <div class="card-footer">
+          <span class="card-meta">${cat?cat.emoji+' ':''}${date}</span>
+          <div class="card-actions">
+            ${v.url?`<button class="card-action-btn" onclick="event.stopPropagation();window.open('${v.url}','_blank')">🔗</button>`:''}
+            <button class="card-action-btn" onclick="event.stopPropagation();deleteVideo('${v.id}')">🗑</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showDetail(id) {
+  const v = videos.find(x => x.id === id);
+  if (!v) return;
+  const cat = categories.find(c => c.id === v.category_id);
+  const date = v.created_at ? v.created_at.slice(0,10) : '';
+  const thumbHtml = v.thumb
+    ? `<img class="detail-thumb" src="${v.thumb}">`
+    : `<div class="detail-thumb-placeholder">🎬</div>`;
+  document.getElementById('detailContent').innerHTML = `
+    <div class="modal-handle"></div>
+    ${thumbHtml}
+    <div class="detail-title">${v.title}</div>
+    ${v.note?`<div class="detail-note">${v.note}</div>`:''}
+    ${v.url?`<a class="detail-link" href="${v.url}" target="_blank">🔗 開啟原始影片</a>`:''}
+    <div class="detail-tags">${(v.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('')}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:16px">
+      ${cat?cat.emoji+' '+cat.name+' · ':''}${date}${v.added_by?' · 👤 '+v.added_by:''}
+    </div>
+    <div class="detail-actions">
+      <button class="btn-secondary" onclick="closeModal('detailModal')">關閉</button>
+      <button class="btn-danger" onclick="deleteVideo('${v.id}')">🗑 刪除</button>
+    </div>`;
+  document.getElementById('detailModal').classList.add('show');
+}
+
+// ── TOAST ──────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
