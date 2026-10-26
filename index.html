@@ -442,7 +442,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
     <div class="page" id="page-import">
       <div class="tmpl-box">
         📋 <strong>匯入格式：</strong>欄位：<code>日期</code>（YYYY-MM-DD）｜<code>類型</code>（收入／支出）｜<code>科目</code>｜<code>摘要</code>｜<code>金額</code><br>
-        <strong>科目：</strong><span style="color:var(--accent-dark)">銷售收入、服務收入、利息收入、其他收入</span>　<span style="color:var(--danger)">銷售成本、薪資費用、租金費用、水電費用、行銷費用、辦公費用、管理費用、稅金費用、宅配運費、其他費用</span>
+        <strong>科目：</strong><span style="color:var(--accent-dark)">銷售收入、服務收入、利息收入、其他收入</span>　<span style="color:var(--danger)">銷售成本、薪資費用、租金費用、水電費用、行銷費用、辦公費用、管理費用、稅金費用、宅配運費、銷貨退回、其他費用</span>
       </div>
       <div class="card">
         <div class="card-header"><span class="card-title">上傳 Excel / CSV</span></div>
@@ -518,7 +518,8 @@ const CATS = {
     {id:'rent',label:'租金費用'},{id:'util',label:'水電費用'},
     {id:'mkt',label:'行銷費用'},{id:'office',label:'辦公費用'},
     {id:'mgmt',label:'管理費用'},{id:'tax',label:'稅金費用'},
-    {id:'shipping',label:'宅配運費'},{id:'other_e',label:'其他費用'},
+    {id:'shipping',label:'宅配運費'},{id:'returns',label:'銷貨退回'},
+    {id:'other_e',label:'其他費用'},
   ]
 };
 const ALL_CAT_LABELS={};
