@@ -802,9 +802,11 @@ document.getElementById('edit-modal').addEventListener('click',function(ev){if(e
 // ══════════════════════════════════════
 function totals(data){
   data=data||filteredEntries();
-  const inc=data.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
-  const exp=data.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
-  return{inc,exp,profit:inc-exp};
+  const gross=data.filter(e=>e.type==='income').reduce((s,e)=>s+e.amount,0);
+  const ret=data.filter(e=>e.type==='expense'&&e.catId==='returns').reduce((s,e)=>s+e.amount,0);
+  const expAll=data.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
+  // 銷貨退回從營業收入扣除（淨額），不計入支出
+  return{inc:gross-ret,exp:expAll-ret,profit:gross-expAll,gross,ret};
 }
 function group(type,data){
   data=data||filteredEntries();
@@ -866,6 +868,7 @@ function renderTx(fd){
 }
 
 const COST_IDS=['cogs','pack'];
+const NON_OPEX=['cogs','pack','returns'];
 function renderPL(fd,inc,exp,profit){
   fd=fd||filteredEntries();
   const{inc:i,exp:ex,profit:p}=totals(fd);
@@ -884,14 +887,19 @@ function renderPL(fd,inc,exp,profit){
   r+=`<tr class="sec-hdr"><td ${c3}>一、營業收入</td></tr>`;
   CATS.income.filter(c=>im[c.id]).forEach(c=>{r+=`<tr class="indent"><td>${c.label}</td><td>${fmt(im[c.id].total)}</td><td class="ratio-col">${fmtR(im[c.id].total,inc)}</td></tr>`;});
   if(!Object.keys(im).length)r+=`<tr class="indent"><td style="color:var(--text-light)">（無記錄）</td><td>—</td><td></td></tr>`;
-  r+=`<tr class="subtotal"><td>營業收入合計</td><td>${fmt(inc)}</td><td class="ratio-col">${fmtR(inc,inc)}</td></tr>`;
+  const retAmt=em['returns']?.total||0;
+  if(retAmt){
+    r+=`<tr class="subtotal"><td>營業收入總額</td><td>${fmt(inc+retAmt)}</td><td class="ratio-col">${fmtR(inc+retAmt,inc)}</td></tr>`;
+    r+=`<tr class="indent"><td>減：銷貨退回</td><td>(${fmt(retAmt)})</td><td class="ratio-col">${fmtR(retAmt,inc)}</td></tr>`;
+    r+=`<tr class="subtotal"><td>營業收入淨額</td><td>${fmt(inc)}</td><td class="ratio-col">${fmtR(inc,inc)}</td></tr>`;
+  }else r+=`<tr class="subtotal"><td>營業收入合計</td><td>${fmt(inc)}</td><td class="ratio-col">${fmtR(inc,inc)}</td></tr>`;
   r+=`<tr class="sec-hdr"><td ${c3}>二、銷售成本</td></tr>`;
   CATS.expense.filter(c=>COST_IDS.includes(c.id)&&em[c.id]).forEach(c=>{r+=`<tr class="indent"><td>${c.label}</td><td>(${fmt(em[c.id].total)})</td><td class="ratio-col">${fmtR(em[c.id].total,inc)}</td></tr>`;});
   if(!COST_IDS.some(k=>em[k]))r+=`<tr class="indent"><td style="color:var(--text-light)">（無記錄）</td><td>—</td><td></td></tr>`;
   r+=`<tr class="subtotal"><td>毛利（Gross Profit）</td><td class="${cls(gross)}">${fmtS(gross)}</td><td class="ratio-col">${fmtR(gross,inc)}</td></tr>`;
   r+=`<tr class="sec-hdr"><td ${c3}>三、營業費用</td></tr>`;
-  CATS.expense.filter(c=>!COST_IDS.includes(c.id)&&em[c.id]).forEach(c=>{r+=`<tr class="indent"><td>${c.label}</td><td>(${fmt(em[c.id].total)})</td><td class="ratio-col">${fmtR(em[c.id].total,inc)}</td></tr>`;});
-  if(!Object.keys(em).filter(k=>!COST_IDS.includes(k)).length)r+=`<tr class="indent"><td style="color:var(--text-light)">（無記錄）</td><td>—</td><td></td></tr>`;
+  CATS.expense.filter(c=>!NON_OPEX.includes(c.id)&&em[c.id]).forEach(c=>{r+=`<tr class="indent"><td>${c.label}</td><td>(${fmt(em[c.id].total)})</td><td class="ratio-col">${fmtR(em[c.id].total,inc)}</td></tr>`;});
+  if(!Object.keys(em).filter(k=>!NON_OPEX.includes(k)).length)r+=`<tr class="indent"><td style="color:var(--text-light)">（無記錄）</td><td>—</td><td></td></tr>`;
   r+=`<tr class="subtotal"><td>營業費用合計</td><td>(${fmt(opex)})</td><td class="ratio-col">${fmtR(opex,inc)}</td></tr>`;
   r+=`<tr class="total-row"><td>本期淨利（損）</td><td class="${cls(profit)}">${fmtS(profit)}</td><td class="ratio-col">${fmtR(profit,inc)}</td></tr>`;
   document.getElementById('pl-tbl').innerHTML=`<thead><tr><th>項目</th><th style="text-align:right">金額（元）</th><th class="ratio-th">佔收入比率</th></tr></thead><tbody>${r}</tbody>`;
@@ -942,8 +950,8 @@ function getMonthlyData(){
   const yr=filterYear||(new Date().getFullYear()+'');
   const months=['01','02','03','04','05','06','07','08','09','10','11','12'];
   const labels=months.map(m=>`${parseInt(m)}月`);
-  const incData=months.map(m=>entries.filter(e=>e.date.startsWith(yr+'-'+m)&&e.type==='income').reduce((s,e)=>s+e.amount,0));
-  const expData=months.map(m=>entries.filter(e=>e.date.startsWith(yr+'-'+m)&&e.type==='expense').reduce((s,e)=>s+e.amount,0));
+  const incData=months.map(m=>entries.filter(e=>e.date.startsWith(yr+'-'+m)).reduce((s,e)=>s+(e.type==='income'?e.amount:(e.catId==='returns'?-e.amount:0)),0));
+  const expData=months.map(m=>entries.filter(e=>e.date.startsWith(yr+'-'+m)&&e.type==='expense'&&e.catId!=='returns').reduce((s,e)=>s+e.amount,0));
   const profitData=incData.map((v,i)=>v-expData[i]);
   return{labels,incData,expData,profitData};
 }
@@ -991,8 +999,9 @@ function renderCharts(){
   destroyChart('epie');
   const epCtx=document.getElementById('chart-expense-pie');
   if(epCtx){
-    const labels3=Object.values(em).map(g=>g.label);
-    const data3=Object.values(em).map(g=>g.total);
+    const em3=Object.entries(em).filter(([k])=>k!=='returns').map(([,g])=>g);
+    const labels3=em3.map(g=>g.label);
+    const data3=em3.map(g=>g.total);
     chartInstances.epie=new Chart(epCtx,{
       type:'doughnut',
       data:{labels:labels3,datasets:[{data:data3,backgroundColor:['#c0392b','#e74c3c','#e17055','#d63031','#b2440e','#922b21','#7b241c','#641e16','#4a235a','#784212'],borderWidth:1}]},
@@ -1160,10 +1169,10 @@ function exportReportExcel(type){
     const cogs=COST_IDS.reduce((a,k)=>a+(em[k]?.total||0),0),gross=inc-cogs,opex=exp-cogs;
     const rows=[['損益表',''],['',''],['一、營業收入',''],
       ...CATS.income.filter(c=>im[c.id]).map(c=>['　'+c.label,im[c.id].total]),
-      ['營業收入合計',inc],['',''],['二、銷售成本',''],
+      ...(em['returns']?[['營業收入總額',inc+em['returns'].total],['　減：銷貨退回',-em['returns'].total],['營業收入淨額',inc]]:[['營業收入合計',inc]]),['',''],['二、銷售成本',''],
       ...(COST_IDS.some(k=>em[k])?CATS.expense.filter(c=>COST_IDS.includes(c.id)&&em[c.id]).map(c=>['　'+c.label,em[c.id].total]):[['　（無）','']]),['毛利',gross],['',''],
       ['三、營業費用',''],
-      ...CATS.expense.filter(c=>!COST_IDS.includes(c.id)&&em[c.id]).map(c=>['　'+c.label,em[c.id].total]),
+      ...CATS.expense.filter(c=>!NON_OPEX.includes(c.id)&&em[c.id]).map(c=>['　'+c.label,em[c.id].total]),
       ['營業費用合計',opex],['',''],['本期淨利（損）',profit]
     ].filter(r=>r.length===2);
     const ws=XLSX.utils.aoa_to_sheet([['項目','金額（元）'],...rows]);
